@@ -6,6 +6,8 @@
   "scripts": {
     "build": "webpack --mode=build",
     "dev": "webpack --progress --colors --watch --mode=dev",
+    "docs:prepare": "gitbook install",
+    "docs:watch": "npm run docs:prepare && gitbook serve",
     "test": "mocha --compilers js:babel-core/register --colors ./test/*.spec.js",
     "test:watch": "mocha --compilers js:babel-core/register --colors -w ./test/*.spec.js"
   },
@@ -30,6 +32,7 @@
     "eslint-plugin-jsx-a11y": "^3.0.2",
     "eslint-plugin-react": "^6.3.0",
     "fast-async": "6.0.34",
+    "gitbook-cli": "^2.3.0",
     "mocha": "2.3.4",
     "webpack": "1.12.9",
     "yargs": "3.32.0"
