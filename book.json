@@ -1,3 +1,6 @@
 {
-  "gitbook": ">= 2.5.2"
+  "root": "./docs",
+  "structure": {
+    "readme": "../README.md"
+  }
 }
