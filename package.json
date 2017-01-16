@@ -38,6 +38,10 @@
     "mobx": "^2.2.0",
     "babel-polyfill": "^6.9.1"
   },
+  "files": [
+    "lib",
+    "LICENSE"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/alexhisen/mobx-form-store.git"
