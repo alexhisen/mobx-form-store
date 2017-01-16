@@ -1,0 +1,23 @@
+{
+  "presets": [
+    "es2015",
+    "stage-0"
+  ],
+  "plugins": [
+    "transform-decorators-legacy",
+    "babel-plugin-add-module-exports",
+    ["fast-async", {
+      "env": {
+        "augmentObject": false,
+        "dontMapStackTraces": true,
+        "asyncStackTrace": false,
+        "dontInstallRequireHook": false
+      },
+      "compiler": {
+        "promises": true,
+        "generators": false
+      },
+      "runtimePattern": null
+    }]
+  ]
+}
