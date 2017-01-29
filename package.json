@@ -6,8 +6,8 @@
   "scripts": {
     "build": "webpack --mode=build",
     "dev": "webpack --progress --colors --watch --mode=dev",
-    "test": "mocha --compilers js:babel-core/register --colors ./test/*.spec.js",
-    "test:watch": "mocha --compilers js:babel-core/register --colors -w ./test/*.spec.js",
+    "test": "mocha --compilers js:babel-core/register --colors ./test/*.spec.js -r mock-local-storage",
+    "test:watch": "mocha --compilers js:babel-core/register --colors -w ./test/*.spec.js -r mock-local-storage",
     "prepublish": "npm build && npm test"
   },
   "dependencies": {
@@ -32,6 +32,7 @@
     "eslint-plugin-react": "^6.3.0",
     "fast-async": "6.0.34",
     "mocha": "2.3.4",
+    "mock-local-storage": "^1.0.2",
     "webpack": "1.12.9",
     "yargs": "3.32.0"
   },

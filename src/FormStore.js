@@ -32,6 +32,7 @@ function observableChanged(change) {
  * @param {FormStore} store
  * @param {Object} updates - what we sent to the server
  * @param {Object} response
+ * @param {String} [response.data] - optional updated data to merge into the store (server.create can return id here)
  * @param {String} [response.status] - 'error' indicates one or more fields were invalid and not saved.
  * @param {String|Object} [response.error] - either a single error message to show to user if string or field-specific error messages if object
  * @param {String|Array} [response.error_field] - name of the field (or array of field names) in error
@@ -70,6 +71,11 @@ async function processSaveResponse(store, updates, response) {
   Object.assign(store.dataServer, updates);
 
   action(() => {
+    if (response.data) {
+      Object.assign(store.dataServer, response.data);
+      Object.assign(store.data, response.data);
+    }
+
     store.dataChanges.forEach((value, key) => {
       if (store.isSame(value, store.dataServer[key])) {
         store.dataChanges.delete(key);
