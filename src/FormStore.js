@@ -314,12 +314,13 @@ class FormStore {
   /**
    * Copies dataServer into data and resets the error observable.
    * Mostly for internal use by refresh().
+   * @param {Object} [data] Optionally set store.data to this object instead of copying dataServer
    */
-  reset() {
+  reset(data) {
     const store = this;
 
     action(() => {
-      store.data = Object.assign({}, store.dataServer);
+      store.data = data || Object.assign({}, store.dataServer);
 
       // setup error observable
       const temp = {};
