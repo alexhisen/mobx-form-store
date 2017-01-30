@@ -4,7 +4,7 @@
   "description": "MobX Backing Store for Forms with optional Auto/Incremental Save",
   "main": "lib/FormStore.js",
   "scripts": {
-    "build": "webpack --mode=build",
+    "build": "webpack && webpack --mode=build",
     "dev": "webpack --progress --colors --watch --mode=dev",
     "test": "mocha --compilers js:babel-core/register --colors ./test/*.spec.js -r mock-local-storage",
     "test:watch": "mocha --compilers js:babel-core/register --colors -w ./test/*.spec.js -r mock-local-storage",
