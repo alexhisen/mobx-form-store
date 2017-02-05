@@ -17,7 +17,7 @@ Instances of FormStore \(models\) store the data entered by the user into form f
 * Will not deem a property as changed for string/number, etc datatype changes or different Date objects with the same date.
 * Optionally auto-saves incremental changes \(if there are any\) every X milliseconds \(see [autoSaveInterval](https://alexhisen.gitbooks.io/mobx-forms/formstore-constructor.html)\).
 * By default, will not \(auto-\)save data properties that failed validation or that are still being edited by the user \(note that FormStore only provides the facilities to track this - validation, etc is done in different components\).
-* In a long-running app, can prevent unnecesary server requests to refresh data in the model by limiting them to not occur more often than Y milliseconds \(see [minRefreshInterval](https://alexhisen.gitbooks.io/mobx-forms/formstore-constructor.html)\).
+* In a long-running app, can prevent unnecessary server requests to refresh data in the model by limiting them to not occur more often than Y milliseconds \(see [minRefreshInterval](https://alexhisen.gitbooks.io/mobx-forms/formstore-constructor.html)\).
 * Will auto-save any unsaved data when attempting to refresh to prevent loss of user-entered data.
 * Provides observable properties to drive things like loading indicators, enabling/disabling form or save button, error and confirmation messages, etc.
 * Server [responses](https://alexhisen.gitbooks.io/mobx-forms/formstore-server-errors.html) to save requests can drive error / validation messaging and discard invalid values.
@@ -26,7 +26,7 @@ Instances of FormStore \(models\) store the data entered by the user into form f
 
 ## Requirements
 
-FormStore only requires [MobX](https://mobx.js.org/). It is published in NPM as an ES5 universal module, including a minified version. **FormStore does not implement the actual server requests, it only calls methods that you provide with the data to be sent to the server.**
+FormStore only requires [MobX](https://mobx.js.org/) 2.2+ or 3.x. It is published in NPM as an ES5 universal module, including a minified version. **FormStore does not implement the actual server requests, it only calls methods that you provide with the data to be sent to the server.**
 
 ## Installation
 
