@@ -157,8 +157,10 @@ class FormStore {
   @observable isSaving = false;
   /** @private */
   @observable serverError = null; // stores both communication error and any explicit response.error returned to save
+
   /** @private */
-  @observable dataChanges = asMap(); // changes that will be sent to server
+  // To support both Mobx 2.2+ and 3.x, this is now done in constructor:
+  // @observable dataChanges = asMap(); // changes that will be sent to server
 
   /** @private */
   dataServer = {}; // data returned by the server (kept for checking old values)
@@ -183,6 +185,9 @@ class FormStore {
       throw new Error('options must specify server set and/or create function(s)');
     }
     store.options.server.errorMessage = store.options.server.errorMessage || DEFAULT_SERVER_ERROR_MESSAGE;
+
+    // Supports both Mobx 3.x (observable.map) and 2.x+ (asMap) without deprecation warnings:
+    this.dataChanges = observable.map ? observable.map() : asMap(); // changes that will be sent to server
 
     // register observe for changes to properties in store.data as well as to complete replacement of store.data object
     const storeDataChanged = observableChanged.bind(store);
