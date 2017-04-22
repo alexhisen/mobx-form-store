@@ -1,6 +1,14 @@
 import chai from 'chai';
-import FormStore from '../lib/FormStore.js';
 import server from './mockServer';
+
+let FormStore;
+const npmScript = process.env.npm_lifecycle_event;
+if (npmScript === 'test') {
+  console.log('Testing compiled version');
+  FormStore = require('../lib/FormStore');
+} else {
+  FormStore = require('../src/FormStore');
+}
 
 chai.expect();
 
