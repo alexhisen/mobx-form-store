@@ -143,8 +143,6 @@ class FormStore {
    */
   lastSync = null;
   /** @private */
-  propertyBeingEdited = null; // property currently being edited as set by startEditing()
-  /** @private */
   saveQueue = Promise.resolve();
   /** @private */
   observeDisposer;
@@ -172,6 +170,7 @@ class FormStore {
   // this allows a confirmation message to be shown to user and to drive its dismissal,
   // UI can set this observable's active property back to false.
   @observable saveNotification = { active: false, status: null };
+  @observable propertyBeingEdited = null; // property currently being edited as set by startEditing()
 
   isSame = isSame;
 
