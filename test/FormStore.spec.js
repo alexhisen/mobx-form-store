@@ -16,9 +16,13 @@ const expect = chai.expect;
 
 let store;
 
+const delay = (time = 2) => {
+  return new Promise((resolve) => setTimeout(resolve, time));
+};
+
 describe('FormStore with idProperty', function () {
   before(function () {
-    store = new FormStore({ name: 'MyStore', idProperty: 'id', server });
+    store = new FormStore({ name: 'MyStore', idProperty: 'id', server, /* log: console.log.bind(console) */ });
   });
 
   it('should return the store name', () => {
@@ -84,6 +88,26 @@ describe('FormStore with idProperty', function () {
 
     it('should save it so it\'s returned in refresh', () => {
       expect(store.data.firstName).to.equal('test');
+    });
+  });
+});
+
+describe('AutoSaving FormStore', function () {
+  before(function () {
+    store = new FormStore({ name: 'MyStore', idProperty: 'id', autoSaveInterval: 1, server, /* log: console.log.bind(console) */ });
+  });
+
+  describe('after auto-saving bad email for first time', function () {
+    before(async function () {
+      server.delete();
+      await store.refresh();
+      store.data.id = '1'; // only mockServer.create validates email, .set does not.
+      store.data.email = 'bad';
+      await delay(); // may not be necessary
+    });
+
+    it('should have an error message', () => {
+      expect(store.dataErrors.email).to.be.ok;
     });
   });
 });

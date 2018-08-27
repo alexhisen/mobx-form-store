@@ -26,7 +26,7 @@ Instances of FormStore \(models\) store the data entered by the user into form f
 
 ## Requirements
 
-FormStore only requires [MobX](https://mobx.js.org/) 2.2+ or 3.x. It is published in NPM as an ES5 universal module, including a minified version. **FormStore does not implement the actual server requests, it only calls methods that you provide with the data to be sent to the server.**
+FormStore only requires [MobX](https://mobx.js.org/) 2.2+, 3.x, 4.x or 5.x. _MobX strict mode is currently not supported._ It is published in NPM as an ES5 universal module, including a minified version. **FormStore does not implement the actual server requests, it only calls methods that you provide with the data to be sent to the server.**
 
 ## Installation
 

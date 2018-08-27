@@ -11,8 +11,8 @@
     "prepublish": "npm build && npm test"
   },
   "dependencies": {
-    "mobx": "^2.2.0 || ^3.0.0",
-    "babel-polyfill": "^6.9.1"
+    "babel-polyfill": "^6.9.1",
+    "mobx": "^2.2.0 || ^3.0.0 || ^4.0.0 || ^5.0.0"
   },
   "devDependencies": {
     "babel": "^6.3.13",
@@ -37,8 +37,8 @@
     "yargs": "^3.32.0"
   },
   "peerDependencies": {
-    "mobx": "^2.2.0 || ^3.0.0",
-    "babel-polyfill": "^6.9.1"
+    "babel-polyfill": "^6.9.1",
+    "mobx": "^2.2.0 || ^3.0.0 || ^4.0.0 || ^5.0.0"
   },
   "files": [
     "lib",

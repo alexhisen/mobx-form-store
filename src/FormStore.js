@@ -1,4 +1,4 @@
-import { observable, observe, autorunAsync, action, computed, asMap } from 'mobx';
+import { observable, observe, autorun, autorunAsync, action, computed, asMap } from 'mobx';
 
 const DEFAULT_SERVER_ERROR_MESSAGE = 'Lost connection to server';
 
@@ -157,7 +157,7 @@ class FormStore {
   @observable serverError = null; // stores both communication error and any explicit response.error returned to save
 
   /** @private */
-  // To support both Mobx 2.2+ and 3.x, this is now done in constructor:
+  // To support both Mobx 2.2+ and 3+, this is now done in constructor:
   // @observable dataChanges = asMap(); // changes that will be sent to server
 
   /** @private */
@@ -185,8 +185,8 @@ class FormStore {
     }
     store.options.server.errorMessage = store.options.server.errorMessage || DEFAULT_SERVER_ERROR_MESSAGE;
 
-    // Supports both Mobx 3.x (observable.map) and 2.x+ (asMap) without deprecation warnings:
-    this.dataChanges = observable.map ? observable.map() : asMap(); // changes that will be sent to server
+    // Supports both Mobx 3+ (observable.map) and 2.x (asMap) without deprecation warnings:
+    store.dataChanges = observable.map ? observable.map() : asMap(); // changes that will be sent to server
 
     // register observe for changes to properties in store.data as well as to complete replacement of store.data object
     const storeDataChanged = observableChanged.bind(store);
@@ -206,10 +206,15 @@ class FormStore {
       })();
     });
 
+    // Supports both Mobx <=3 (autorunAsync) and Mobx 4+
+    // (presence of toJSON method on an ObservableMap is used to detect Mobx 4+,
+    // because in non-production build autorunAsync exists in 4.x to issue deprecation error)
+    const asyncAutorun = store.dataChanges.toJSON ? (fn, delay) => autorun(fn, { delay }) : autorunAsync;
     // auto-save by observing dataChanges keys
     if (store.options.autoSaveInterval) {
-      autorunAsync(() => {
-        if ((!store.options.idProperty || this.data[store.options.idProperty]) && this.dataChanges.keys().length) {
+      asyncAutorun(() => {
+        // We iterate over the dataChanges and not just check size to observe an atomic change in which size doesn't change
+        if ((!store.options.idProperty || store.data[store.options.idProperty]) && Array.from(store.dataChanges).length) {
           store.options.log(`[${store.options.name}] Auto-save started...`);
 
           store.save({ skipPropertyBeingEdited: true, keepServerError: true });
@@ -240,7 +245,8 @@ class FormStore {
     if (store.status.hasChanges) {
       // This will trigger autorun in case it already ran while we were editing:
       action(() => {
-        const key = store.dataChanges.keys()[0];
+        // In MobX 4+, ObservableMap.keys() returns an Iterable, not an array
+        const key = Array.from(store.dataChanges)[0];
         const value = store.dataChanges.get(key);
         store.dataChanges.delete(key);
         store.dataChanges.set(key, value);
@@ -428,7 +434,8 @@ class FormStore {
         if (saveAll) {
           updates = Object.assign({}, store.data);
         } else {
-          updates = store.dataChanges.toJS();
+          // Mobx 4+ toJS() exports a Map, not an Object and toJSON method was added to ObservableMaps in 4+ to export an Object
+          updates = store.dataChanges.toJSON ? store.dataChanges.toJSON() : store.dataChanges.toJS();
 
           if (Object.keys(updates).length === 0) {
             store.options.log(`[${store.options.name}] No changes to save.`);
