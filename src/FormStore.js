@@ -353,11 +353,17 @@ class FormStore {
       return false;
     }
     store.options.log(`[${store.options.name}] Starting data refresh...`);
+
+    if (store.isLoading) {
+      store.options.log(`[${store.options.name}] Data is already being refreshed.`);
+      return false;
+    }
+
     const now = new Date();
     const past = new Date(Date.now() - store.options.minRefreshInterval);
 
     // check if lastSync is between now and 15 minutes ago
-    if (past < store.lastSync && store.lastSync < now) {
+    if (past < store.lastSync && store.lastSync <= now) {
       store.options.log(`[${store.options.name}] Data refreshed within last ${store.options.minRefreshInterval / 1000} seconds.`);
       return false;
     }

@@ -22,11 +22,11 @@ const delay = (time = 2) => {
 
 describe('FormStore with idProperty', function () {
   before(function () {
-    store = new FormStore({ name: 'MyStore', idProperty: 'id', server, /* log: console.log.bind(console) */ });
+    store = new FormStore({ name: 'MyStore1', idProperty: 'id', server, /* log: console.log.bind(console) */ });
   });
 
   it('should return the store name', () => {
-    expect(store.options.name).to.be.equal('MyStore');
+    expect(store.options.name).to.be.equal('MyStore1');
   });
 
   describe('after getting the mock data', function () {
@@ -94,7 +94,7 @@ describe('FormStore with idProperty', function () {
 
 describe('AutoSaving FormStore', function () {
   before(function () {
-    store = new FormStore({ name: 'MyStore', idProperty: 'id', autoSaveInterval: 1, server, /* log: console.log.bind(console) */ });
+    store = new FormStore({ name: 'MyStore2', idProperty: 'id', autoSaveInterval: 1, server, /* log: console.log.bind(console) */ });
   });
 
   describe('after auto-saving bad email for first time', function () {
@@ -109,5 +109,31 @@ describe('AutoSaving FormStore', function () {
     it('should have an error message', () => {
       expect(store.dataErrors.email).to.be.ok;
     });
+  });
+});
+
+describe('FormStore with minRefreshInterval', function () {
+  beforeEach(function () {
+    store = new FormStore({
+      name: 'MyStore3',
+      server,
+      minRefreshInterval: 5000,
+      /* log: console.log.bind(console) */
+    });
+  });
+
+  it('should not perform a refresh right after prior refresh', async () => {
+    server.delete();
+    let result = await store.refresh();
+    expect(result).to.be.true;
+    result = await store.refresh();
+    expect(result).to.be.false;
+  });
+
+  it('should not perform a refresh during another refresh', async () => {
+    server.delete();
+    store.refresh();
+    const result = await store.refresh();
+    expect(result).to.be.false;
   });
 });
