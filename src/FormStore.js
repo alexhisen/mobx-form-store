@@ -246,7 +246,7 @@ class FormStore {
       // This will trigger autorun in case it already ran while we were editing:
       action(() => {
         // In MobX 4+, ObservableMap.keys() returns an Iterable, not an array
-        const key = Array.from(store.dataChanges)[0];
+        const key = Array.from(store.dataChanges)[0][0];
         const value = store.dataChanges.get(key);
         store.dataChanges.delete(key);
         store.dataChanges.set(key, value);
