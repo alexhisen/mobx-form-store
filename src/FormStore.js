@@ -454,11 +454,13 @@ class FormStore {
             if (skipPropertyBeingEdited && property === store.propertyBeingEdited) {
               store.options.log(`[${store.options.name}] Property "${property}" is being edited.`);
               delete updates[property];
+              return;
             }
 
             if (store.dataErrors[property]) {
               store.options.log(`[${store.options.name}] Property "${property}" is not validated.`);
               delete updates[property];
+              return;
             }
 
             if (store.isSame(updates[property], store.dataServer[property])) {

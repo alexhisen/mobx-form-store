@@ -11,7 +11,7 @@ const record = {
 };
 
 function getRecord() {
-  return JSON.parse(localStorage.getItem('mockServerUser')) || record;
+  return JSON.parse(localStorage.getItem('mockServerUser')) || Object.assign({}, record);
 }
 
 function setRecord(data) {

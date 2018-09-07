@@ -20,13 +20,13 @@ const delay = (time = 2) => {
   return new Promise((resolve) => setTimeout(resolve, time));
 };
 
-describe('FormStore with idProperty', function () {
+describe('FormStore with idProperty and id', function () {
   before(function () {
-    store = new FormStore({ name: 'MyStore1', idProperty: 'id', server, /* log: console.log.bind(console) */ });
+    store = new FormStore({ name: 'FormStore with idProperty and id', idProperty: 'id', server, /* log: console.log.bind(console) */});
   });
 
   it('should return the store name', () => {
-    expect(store.options.name).to.be.equal('MyStore1');
+    expect(store.options.name).to.be.equal('FormStore with idProperty and id');
   });
 
   describe('after getting the mock data', function () {
@@ -65,12 +65,19 @@ describe('FormStore with idProperty', function () {
       expect(store.status.canSave).to.be.false;
     });
   });
+});
 
-  describe('after saving for first time', function () {
+describe('FormStore with idProperty', function () {
+    before(function () {
+      store = new FormStore({ name: 'FormStore with idProperty', idProperty: 'id', server, /* log: console.log.bind(console) */});
+    });
+
+    describe('after saving for first time', function () {
     before(async function () {
       server.delete();
       await store.refresh();
-      await store.save();
+      store.data.email = 'test@domain.com';
+      await store.save({ allowCreate: true });
     });
 
     it('should have an id', () => {
@@ -94,7 +101,7 @@ describe('FormStore with idProperty', function () {
 
 describe('AutoSaving FormStore', function () {
   before(function () {
-    store = new FormStore({ name: 'MyStore2', idProperty: 'id', autoSaveInterval: 1, server, /* log: console.log.bind(console) */ });
+    store = new FormStore({ name: 'AutoSaving FormStore', idProperty: 'id', autoSaveInterval: 1, server, /* log: console.log.bind(console) */});
   });
 
   describe('after auto-saving bad email for first time', function () {
@@ -110,12 +117,46 @@ describe('AutoSaving FormStore', function () {
       expect(store.dataErrors.email).to.be.ok;
     });
   });
+
+  // relies on id set by test above
+  describe('edits in progress', function () {
+    it('should not save while editing', async () => {
+      store.startEditing('firstName');
+      store.data.firstName = 'first';
+      await delay();
+      // await store.save({ skipPropertyBeingEdited: true, keepServerError: true }); // same as auto-save
+      const serverData = await server.get();
+      expect(serverData.firstName).to.be.null;
+    });
+
+    it('should save when done editing', async () => {
+      store.stopEditing();
+      await delay();
+      // await store.save({ skipPropertyBeingEdited: true, keepServerError: true }); // same as auto-save
+      const serverData = await server.get();
+      expect(serverData.firstName).to.equal('first');
+    });
+
+    it('field in error should remain unsaved', async () => {
+      const serverData = await server.get();
+      expect(serverData.email).to.be.null;
+    });
+
+    it('should save updated field when no longer in error', async () => {
+      store.dataErrors.email = null;
+      store.data.email = 'test@domain.com';
+      await delay();
+      // await store.save({ skipPropertyBeingEdited: true, keepServerError: true }); // same as auto-save
+      const serverData = await server.get();
+      expect(serverData.email).to.equal('test@domain.com');
+    });
+  });
 });
 
 describe('FormStore with minRefreshInterval', function () {
   beforeEach(function () {
     store = new FormStore({
-      name: 'MyStore3',
+      name: 'FormStore with minRefreshInterval',
       server,
       minRefreshInterval: 5000,
       /* log: console.log.bind(console) */
