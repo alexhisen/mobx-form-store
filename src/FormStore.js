@@ -207,9 +207,9 @@ class FormStore {
     });
 
     // Supports both Mobx <=3 (autorunAsync) and Mobx 4+
-    // (presence of toJSON method on an ObservableMap is used to detect Mobx 4+,
+    // (ObservableMap keys no longer returning an Array is used to detect Mobx 4+,
     // because in non-production build autorunAsync exists in 4.x to issue deprecation error)
-    const asyncAutorun = store.dataChanges.toJSON ? (fn, delay) => autorun(fn, { delay }) : autorunAsync;
+    const asyncAutorun = Array.isArray(store.dataChanges.keys()) ? autorunAsync : (fn, delay) => autorun(fn, { delay });
     // auto-save by observing dataChanges keys
     if (store.options.autoSaveInterval) {
       asyncAutorun(() => {
@@ -440,7 +440,7 @@ class FormStore {
         if (saveAll) {
           updates = Object.assign({}, store.data);
         } else {
-          // Mobx 4+ toJS() exports a Map, not an Object and toJSON method was added to ObservableMaps in 4+ to export an Object
+          // Mobx 4+ toJS() exports a Map, not an Object and toJSON is the 'legacy' method to export an Object
           updates = store.dataChanges.toJSON ? store.dataChanges.toJSON() : store.dataChanges.toJS();
 
           if (Object.keys(updates).length === 0) {
