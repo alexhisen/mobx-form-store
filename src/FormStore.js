@@ -145,7 +145,11 @@ class FormStore {
   /** @private */
   saveQueue = Promise.resolve();
   /** @private */
-  observeDisposer;
+  observeDataObjectDisposer;
+  /** @private */
+  observeDataPropertiesDisposer;
+  /** @private */
+  autorunDisposer;
 
   /** @private */
   @observable isReady = false; // true after initial data load (refresh) has completed
@@ -190,10 +194,10 @@ class FormStore {
 
     // register observe for changes to properties in store.data as well as to complete replacement of store.data object
     const storeDataChanged = observableChanged.bind(store);
-    store.observeDisposer = observe(store.data, storeDataChanged);
-    observe(store, 'data', () => {
-      store.observeDisposer && store.observeDisposer();
-      store.observeDisposer = observe(store.data, storeDataChanged);
+    store.observeDataPropertiesDisposer = observe(store.data, storeDataChanged);
+    store.observeDataObjectDisposer = observe(store, 'data', () => {
+      store.observeDataPropertiesDisposer && store.observeDataPropertiesDisposer();
+      store.observeDataPropertiesDisposer = observe(store.data, storeDataChanged);
 
       store.dataChanges.clear();
       action(() => {
@@ -212,7 +216,7 @@ class FormStore {
     const asyncAutorun = Array.isArray(store.dataChanges.keys()) ? autorunAsync : (fn, delay) => autorun(fn, { delay });
     // auto-save by observing dataChanges keys
     if (store.options.autoSaveInterval) {
-      asyncAutorun(() => {
+      store.autorunDisposer = asyncAutorun(() => {
         // We iterate over the dataChanges and not just check size to observe an atomic change in which size doesn't change
         if ((!store.options.idProperty || store.data[store.options.idProperty]) && Array.from(store.dataChanges).length) {
           store.options.log(`[${store.options.name}] Auto-save started...`);
@@ -227,6 +231,16 @@ class FormStore {
       store.reset();
       store.isReady = true;
     }
+  }
+
+  /**
+   *  disposes of all internal observation/autoruns so this instance can be garbage-collected.
+   */
+  dispose() {
+    const store = this;
+    store.autorunDisposer && store.autorunDisposer();
+    store.observeDataObjectDisposer && store.observeDataObjectDisposer();
+    store.observeDataPropertiesDisposer && store.observeDataPropertiesDisposer();
   }
 
   /**
