@@ -1,4 +1,4 @@
-import { observable, observe, autorun, autorunAsync, action, computed, asMap } from 'mobx';
+import { observable, observe, autorun, autorunAsync, action, computed, asMap, isComputedProp } from 'mobx';
 
 const DEFAULT_SERVER_ERROR_MESSAGE = 'Lost connection to server';
 
@@ -26,6 +26,27 @@ function observableChanged(change) {
     }
   })();
 }
+
+/**
+ * Sets up observation on all computed data properties, if any
+ * @param {FormStore} store
+ */
+function observeComputedProperties(store) {
+  store.observeComputedPropertiesDisposers.forEach((f) => f());
+  store.observeComputedPropertiesDisposers = [];
+  action(() => {
+    Object.getOwnPropertyNames(store.data).forEach((key) => {
+      if (isComputedProp(store.data, key)) {
+        store.options.log(`[${store.options.name}] Observing computed property: ${key}`);
+        const disposer = observe(store.data, key, ({ newValue }) => store.storeDataChanged({ name: key, newValue }));
+        store.observeComputedPropertiesDisposers.push(disposer);
+        // add or delete from dataChanges depending on whether value is same as in dataServer:
+        store.storeDataChanged({ name: key, newValue: store.data[key] });
+      }
+    });
+  })();
+}
+
 /**
  * Records successfully saved data as saved
  * and reverts fields server indicates to be in error
@@ -109,6 +130,7 @@ class FormStore {
   options = {
     name: 'FormStore', // used in log statements
     idProperty: null,
+    autoSaveOptions: { skipPropertyBeingEdited: true, keepServerError: true },
     autoSaveInterval: 0, // in ms
     minRefreshInterval: 0, // in ms
     log: function noop() {},
@@ -148,6 +170,11 @@ class FormStore {
   observeDataObjectDisposer;
   /** @private */
   observeDataPropertiesDisposer;
+  /**
+   * @private
+   * @type {Array<Function>}
+   */
+  observeComputedPropertiesDisposers = [];
   /** @private */
   autorunDisposer;
 
@@ -193,11 +220,11 @@ class FormStore {
     store.dataChanges = observable.map ? observable.map() : asMap(); // changes that will be sent to server
 
     // register observe for changes to properties in store.data as well as to complete replacement of store.data object
-    const storeDataChanged = observableChanged.bind(store);
-    store.observeDataPropertiesDisposer = observe(store.data, storeDataChanged);
+    store.storeDataChanged = observableChanged.bind(store);
+    store.observeDataPropertiesDisposer = observe(store.data, store.storeDataChanged);
     store.observeDataObjectDisposer = observe(store, 'data', () => {
       store.observeDataPropertiesDisposer && store.observeDataPropertiesDisposer();
-      store.observeDataPropertiesDisposer = observe(store.data, storeDataChanged);
+      store.observeDataPropertiesDisposer = observe(store.data, store.storeDataChanged);
 
       store.dataChanges.clear();
       action(() => {
@@ -207,6 +234,7 @@ class FormStore {
             store.dataChanges.set(key, value);
           }
         });
+        observeComputedProperties(store);
       })();
     });
 
@@ -217,11 +245,9 @@ class FormStore {
     // auto-save by observing dataChanges keys
     if (store.options.autoSaveInterval) {
       store.autorunDisposer = asyncAutorun(() => {
-        // We iterate over the dataChanges and not just check size to observe an atomic change in which size doesn't change
         if ((!store.options.idProperty || store.data[store.options.idProperty]) && Array.from(store.dataChanges).length) {
           store.options.log(`[${store.options.name}] Auto-save started...`);
-
-          store.save({ skipPropertyBeingEdited: true, keepServerError: true });
+          store.save(store.options.autoSaveOptions);
         }
       }, store.options.autoSaveInterval);
     }
@@ -229,6 +255,7 @@ class FormStore {
     if (data) {
       store.dataServer = data;
       store.reset();
+      observeComputedProperties(store);
       store.isReady = true;
     }
   }
@@ -241,6 +268,10 @@ class FormStore {
     store.autorunDisposer && store.autorunDisposer();
     store.observeDataObjectDisposer && store.observeDataObjectDisposer();
     store.observeDataPropertiesDisposer && store.observeDataPropertiesDisposer();
+    store.observeComputedPropertiesDisposers.forEach((f) => f());
+    store.observeDataObjectDisposer = undefined;
+    store.observeDataPropertiesDisposer = undefined;
+    store.observeComputedPropertiesDisposers = [];
   }
 
   /**
@@ -415,6 +446,8 @@ class FormStore {
       if (typeof store.options.afterRefresh === 'function') {
         await store.options.afterRefresh(store);
       }
+
+      observeComputedProperties(store);
 
       store.options.log(`[${store.options.name}] Refresh finished.`);
       if (!store.isReady) store.isReady = true;

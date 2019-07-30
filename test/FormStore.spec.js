@@ -1,5 +1,6 @@
 import chai from 'chai';
 import server from './mockServer';
+import { extendObservable } from "mobx";
 
 let FormStore;
 const npmScript = process.env.npm_lifecycle_event;
@@ -176,5 +177,33 @@ describe('FormStore with minRefreshInterval', function () {
     store.refresh();
     const result = await store.refresh();
     expect(result).to.be.false;
+  });
+});
+
+describe('FormStore with a computed', function () {
+  beforeEach(function () {
+    store = new FormStore({
+      name: 'FormStore with a computed',
+      server,
+      afterRefresh: async (store) => {
+        delete store.data.name;
+        extendObservable(store.data, {
+          get name() {
+            return (store.data.firstName || store.data.lastName) && `${store.data.firstName || ''} ${store.data.lastName || ''}`.trim();
+          },
+        });
+      },
+      /* log: console.log.bind(console) */
+    });
+  });
+
+  it('should update and save computed', async () => {
+    server.delete();
+    await store.refresh();
+    store.data.firstName = 'first';
+    store.data.lastName = 'last';
+    expect(store.data.name).to.equal('first last');
+    await store.save();
+    expect(store.dataServer.name).to.equal('first last');
   });
 });

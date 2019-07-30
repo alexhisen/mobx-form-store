@@ -6,6 +6,7 @@ const record = {
   id: null,
   firstName: null,
   lastName: null,
+  name: null,
   email: null,
   phone: null,
 };
