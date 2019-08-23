@@ -238,19 +238,7 @@ class FormStore {
       })();
     });
 
-    // Supports both Mobx <=3 (autorunAsync) and Mobx 4+
-    // (ObservableMap keys no longer returning an Array is used to detect Mobx 4+,
-    // because in non-production build autorunAsync exists in 4.x to issue deprecation error)
-    const asyncAutorun = Array.isArray(store.dataChanges.keys()) ? autorunAsync : (fn, delay) => autorun(fn, { delay });
-    // auto-save by observing dataChanges keys
-    if (store.options.autoSaveInterval) {
-      store.autorunDisposer = asyncAutorun(() => {
-        if ((!store.options.idProperty || store.data[store.options.idProperty]) && Array.from(store.dataChanges).length) {
-          store.options.log(`[${store.options.name}] Auto-save started...`);
-          store.save(store.options.autoSaveOptions);
-        }
-      }, store.options.autoSaveInterval);
-    }
+    store.configAutoSave(store.options.autoSaveInterval, store.options.autoSaveOptions);
 
     if (data) {
       store.dataServer = data;
@@ -269,9 +257,39 @@ class FormStore {
     store.observeDataObjectDisposer && store.observeDataObjectDisposer();
     store.observeDataPropertiesDisposer && store.observeDataPropertiesDisposer();
     store.observeComputedPropertiesDisposers.forEach((f) => f());
+    store.autorunDisposer = undefined;
     store.observeDataObjectDisposer = undefined;
     store.observeDataPropertiesDisposer = undefined;
     store.observeComputedPropertiesDisposers = [];
+  }
+
+  /**
+   * Configures and enables or disables auto-save
+   * @param {Number} autoSaveInterval - (in ms) - if non-zero autosave will be enabled, otherwise disabled
+   * @param {Object} [autoSaveOptions] - overrides the default autoSaveOptions if provided
+   */
+  configAutoSave(autoSaveInterval, autoSaveOptions) {
+    const store = this;
+    store.autorunDisposer && store.autorunDisposer();
+    store.options.autoSaveInterval = autoSaveInterval;
+    store.options.autoSaveOptions = autoSaveOptions || store.options.autoSaveOptions;
+
+    // auto-save by observing dataChanges keys
+    if (store.options.autoSaveInterval) {
+      // Supports both Mobx <=3 (autorunAsync) and Mobx 4+
+      // (ObservableMap keys no longer returning an Array is used to detect Mobx 4+,
+      // because in non-production build autorunAsync exists in 4.x to issue deprecation error)
+      const asyncAutorun = Array.isArray(store.dataChanges.keys()) ? autorunAsync : (fn, delay) => autorun(fn, { delay });
+
+      store.autorunDisposer = asyncAutorun(() => {
+        if ((!store.options.idProperty || store.data[store.options.idProperty]) && Array.from(store.dataChanges).length) {
+          store.options.log(`[${store.options.name}] Auto-save started...`);
+          store.save(store.options.autoSaveOptions);
+        }
+      }, store.options.autoSaveInterval);
+    } else {
+      store.autorunDisposer = undefined;
+    }
   }
 
   /**
