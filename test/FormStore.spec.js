@@ -206,4 +206,13 @@ describe('FormStore with a computed', function () {
     await store.save();
     expect(store.dataServer.name).to.equal('first last');
   });
+
+  it('should save computed in saveAll', async () => {
+    server.delete();
+    await store.refresh();
+    store.data.firstName = 'first';
+    store.data.lastName = 'lastname';
+    await store.save({ saveAll: true });
+    expect(store.dataServer.name).to.equal('first lastname');
+  });
 });

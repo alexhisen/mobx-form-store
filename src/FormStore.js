@@ -503,7 +503,8 @@ class FormStore {
 
         let updates;
         if (saveAll) {
-          updates = Object.assign({}, store.data);
+          updates = {};
+          Object.getOwnPropertyNames(store.data).forEach((key) => { updates[key] = store.data[key]; });
         } else {
           // Mobx 4+ toJS() exports a Map, not an Object and toJSON is the 'legacy' method to export an Object
           updates = store.dataChanges.toJSON ? store.dataChanges.toJSON() : store.dataChanges.toJS();
