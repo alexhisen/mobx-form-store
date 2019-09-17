@@ -97,11 +97,11 @@ async function processSaveResponse(store, updates, response) {
       Object.assign(store.data, response.data);
     }
 
-    store.dataChanges.forEach((value, key) => {
+    for (const [key, value] of Array.from(store.dataChanges)) {
       if (store.isSame(value, store.dataServer[key])) {
         store.dataChanges.delete(key);
       }
-    });
+    }
   })();
 
   if (typeof store.options.afterSave === 'function') {

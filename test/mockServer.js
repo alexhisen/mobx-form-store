@@ -9,6 +9,7 @@ const record = {
   name: null,
   email: null,
   phone: null,
+  birthdate: null,
 };
 
 function getRecord() {
@@ -23,7 +24,7 @@ class MockServer {
   async get() {
     const data = getRecord();
     Object.keys(data).filter((key) => key.match(/date/i)).forEach((key) => {
-      data[key] = new Date(data[key]);
+      data[key] = data[key] && new Date(data[key]);
     });
     return data;
   }

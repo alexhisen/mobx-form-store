@@ -100,6 +100,51 @@ describe('FormStore with idProperty', function () {
   });
 });
 
+describe('FormStore without idProperty', function () {
+  const birthdate1 = new Date('2001-01-01');
+  const birthdate2 = new Date('2001-01-01'); // same as 1
+  const birthdate3 = new Date('2002-01-01');
+
+  before(function () {
+    store = new FormStore({ name: 'FormStore without idProperty', server, /* log: console.log.bind(console) */});
+  });
+
+  describe('after saving a date', function () {
+    before(async function () {
+      server.delete();
+      await store.refresh();
+      store.data.birthdate = birthdate1;
+      await store.save();
+    });
+
+    it('should have a status.hasChanges of false', () => {
+      expect(store.status.hasChanges).to.be.false;
+    });
+  });
+
+  describe('after setting same date', function () {
+    before(async function () {
+      store.data.birthdate = birthdate2;
+    });
+
+    it('should have a status.hasChanges of false', () => {
+      expect(store.status.hasChanges).to.be.false;
+    });
+  });
+
+  describe('after changing multiple keys and saving', function () {
+    before(async function () {
+      store.data.firstName = 'test';
+      store.data.birthdate = birthdate3;
+      await store.save();
+    });
+
+    it('should have a status.hasChanges of false', () => {
+      expect(store.status.hasChanges).to.be.false;
+    });
+  });
+});
+
 describe('AutoSaving FormStore', function () {
   before(function () {
     store = new FormStore({ name: 'AutoSaving FormStore', idProperty: 'id', autoSaveInterval: 1, server, /* log: console.log.bind(console) */});
