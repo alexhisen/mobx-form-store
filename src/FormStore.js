@@ -4,7 +4,9 @@ const DEFAULT_SERVER_ERROR_MESSAGE = 'Lost connection to server';
 
 function isSame(val1, val2) {
   /* eslint-disable eqeqeq */
-  return val1 == val2 || (val1 instanceof Date && val2 instanceof Date && val1.valueOf() == val2.valueOf());
+  return val1 == val2 ||
+    (val1 instanceof Date && val2 instanceof Date && val1.valueOf() == val2.valueOf()) ||
+    (Array.isArray(val1) && Array.isArray(val2) && val1.toString() === val2.toString());
   /* eslint-enable eqeqeq */
 }
 
@@ -385,7 +387,7 @@ class FormStore {
   }
 
   /**
-   * Copies dataServer into data and resets the error observable.
+   * Copies dataServer into data and resets the error observable and lastSync.
    * Mostly for internal use by refresh().
    * @param {Object} [data] Optionally set store.data to this object instead of copying dataServer
    */
@@ -401,6 +403,8 @@ class FormStore {
         temp[key] = null;
       });
       store.dataErrors = temp;
+
+      store.lastSync = null;
     })();
   }
 
@@ -457,8 +461,8 @@ class FormStore {
       action(() => {
         store.dataServer = result;
         store.serverError = null;
-        store.lastSync = new Date();
         store.reset();
+        store.lastSync = new Date();
       })();
 
       if (typeof store.options.afterRefresh === 'function') {

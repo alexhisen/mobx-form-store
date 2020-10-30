@@ -14,7 +14,7 @@ Instances of FormStore \(models\) store the data entered by the user into form f
 ## Features
 
 * Tracks changes in each data property and by default saves only the changes.
-* Will not deem a property as changed for string/number, etc datatype changes or different Date objects with the same date.
+* Will not deem a property as changed for string/number, etc datatype changes or different Date objects with the same date or \(in v1.4+\) different Arrays with the same content.
 * Optionally auto-saves incremental changes \(if there are any\) every X milliseconds \(see [autoSaveInterval](https://alexhisen.gitbooks.io/mobx-forms/formstore-constructor.html)\).
 * By default, will not \(auto-\)save data properties that failed validation or that are still being edited by the user \(note that FormStore only provides the facilities to track this - validation, etc is done in different components\).
 * In a long-running app, can prevent unnecessary server requests to refresh data in the model by limiting them to not occur more often than Y milliseconds \(see [minRefreshInterval](https://alexhisen.gitbooks.io/mobx-forms/formstore-constructor.html)\).
