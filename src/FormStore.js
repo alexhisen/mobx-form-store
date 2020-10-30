@@ -1,12 +1,17 @@
-import { observable, observe, autorun, autorunAsync, action, computed, asMap, isComputedProp } from 'mobx';
+import { observable, observe, autorun, autorunAsync, action, computed, asMap, isComputedProp, isObservableArray } from 'mobx';
 
 const DEFAULT_SERVER_ERROR_MESSAGE = 'Lost connection to server';
 
 function isSame(val1, val2) {
   /* eslint-disable eqeqeq */
-  return val1 == val2 ||
+  return (
+    val1 == val2 ||
     (val1 instanceof Date && val2 instanceof Date && val1.valueOf() == val2.valueOf()) ||
-    (Array.isArray(val1) && Array.isArray(val2) && val1.toString() === val2.toString());
+    ((Array.isArray(val1) || isObservableArray(val1)) &&
+     (Array.isArray(val2) || isObservableArray(val2)) &&
+     val1.toString() === val2.toString()
+    )
+  );
   /* eslint-enable eqeqeq */
 }
 
