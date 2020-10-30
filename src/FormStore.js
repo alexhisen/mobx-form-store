@@ -524,7 +524,7 @@ class FormStore {
           }
 
           // check if we have property currently being edited in changes
-          // or if a property has an error
+          // or if a property has an error and convert observable Arrays to plain ones
           Object.keys(updates).forEach((property) => {
             if (skipPropertyBeingEdited && property === store.propertyBeingEdited) {
               store.options.log(`[${store.options.name}] Property "${property}" is being edited.`);
@@ -536,6 +536,10 @@ class FormStore {
               store.options.log(`[${store.options.name}] Property "${property}" is not validated.`);
               delete updates[property];
               return;
+            }
+
+            if (isObservableArray(updates[property])) {
+              updates[property] = updates[property].slice();
             }
 
             if (store.isSame(updates[property], store.dataServer[property])) {
