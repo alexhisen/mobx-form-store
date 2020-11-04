@@ -289,7 +289,7 @@ class FormStore {
       const asyncAutorun = Array.isArray(store.dataChanges.keys()) ? autorunAsync : (fn, delay) => autorun(fn, { delay });
 
       store.autorunDisposer = asyncAutorun(() => {
-        if ((!store.options.idProperty || store.data[store.options.idProperty]) && Array.from(store.dataChanges).length) {
+        if (!store.status.mustCreate && Array.from(store.dataChanges).length) {
           store.options.log(`[${store.options.name}] Auto-save started...`);
           store.save(store.options.autoSaveOptions);
         }
@@ -382,6 +382,7 @@ class FormStore {
       isInProgress: store.isLoading || store.isSaving,
       canSave: !store.isLoading && !store.isSaving && (store.serverError ? errors.length === 1 : errors.length === 0),
       hasChanges: !!store.dataChanges.size,
+      mustCreate: !!(store.options.idProperty && !store.dataServer[store.options.idProperty]),
     };
     if (typeof store.options.isReadOnly === 'function') {
       status.isReadOnly = store.options.isReadOnly(status);
@@ -416,12 +417,13 @@ class FormStore {
   /**
    * Loads data from server unless a refresh was performed within the last minRefreshInterval (i.e. 15 minutes).
    * If there are pending (and ready to save) changes, triggers save instead and 'resets the clock' on minRefreshInterval.
-   * For a store with idProperty defined, if that data property is falsy, loads from server only the very first time refresh() is called.
+   * For a store with idProperty defined, if that data property is falsy in data received from server,
+   * loads from server only the very first time refresh() is called.
    * @returns {Promise|Boolean} resolves to true if refresh actually performed, false if skipped
    */
   async refresh() {
     const store = this;
-    if (!store.options.server.get || (store.isReady && store.options.idProperty && !store.data[store.options.idProperty])) {
+    if (!store.options.server.get || (store.isReady && store.status.mustCreate)) {
       return false;
     }
     store.options.log(`[${store.options.name}] Starting data refresh...`);
@@ -440,7 +442,7 @@ class FormStore {
       return false;
     }
 
-    if (store.status.hasChanges && (!store.options.idProperty || store.data[store.options.idProperty])) {
+    if (store.status.hasChanges && !store.status.mustCreate) {
       store.options.log(`[${store.options.name}] Unsaved changes detected...`);
 
       if (await store.save()) {
@@ -488,7 +490,8 @@ class FormStore {
 
   /**
    * Sends ready-to-save data changes to the server (normally using server.set unless it's undefined, then with server.create)
-   * For a store with idProperty defined when that property is falsy and allowCreate=true, uses server.create instead.
+   * For a store with idProperty defined when that property is falsy in the data received from server
+   * and allowCreate=true, uses server.create instead.
    * Calls to save() while one is in progress are queued.
    * @param {Object} saveOptions - the object as a whole is also passed to the beforeSave callback
    * @param {Boolean} [saveOptions.allowCreate=false] - for a store with idProperty defined, this must be true
@@ -505,7 +508,7 @@ class FormStore {
 
     store.saveQueue = store.saveQueue.then(
       async () => {
-        if (store.options.idProperty && !store.data[store.options.idProperty] && !allowCreate) {
+        if (store.status.mustCreate && !allowCreate) {
           return false;
         }
         store.options.log(`[${store.options.name}] Starting data save...`);
@@ -571,7 +574,7 @@ class FormStore {
           }
 
           let response;
-          if (store.options.server.set && (!store.options.idProperty || !store.options.server.create || store.data[store.options.idProperty])) {
+          if (store.options.server.set && (!store.options.server.create || !store.status.mustCreate)) {
             response = await store.options.server.set(updates);
           } else {
             response = await store.options.server.create(updates);

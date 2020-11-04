@@ -21,9 +21,15 @@ Instances of FormStore \(models\) store the data entered by the user into form f
 * Will auto-save any unsaved data when attempting to refresh to prevent loss of user-entered data.
 * Provides observable properties to drive things like loading indicators, enabling/disabling form or save button, error and confirmation messages, etc.
 * Server [responses](https://alexhisen.gitbooks.io/mobx-forms/formstore-server-errors.html) to save requests can drive error / validation messaging and discard invalid values.
-* Can differentiate between 'create' and 'update' save operations. A model that has not yet been created on the server will not try to refresh from server.
+* Can differentiate between 'create' and 'update' save operations. A model that has not yet been created on the server will not try to refresh from server \(this works right in v2.0+\).
 * Saves are queued automatically, never concurrent.
 * \(NEW in v1.3\) Auto-save can be dynamically configured and enabled or disabled
+
+## Breaking change in Version 2.0
+Previously, server.create() was called (instead of server.set()) only when the property defined as the idProperty in store.data was falsy.
+This worked well if the idProperty was only returned by the server and was not user-enterable.
+Now whether server.create() is called is driven by a new store.status.mustCreate property which is true only when the idProperty has not yet been returned by the server / saved even if it already has a value in store.data.
+Note that MobxSchemaForm v.1.14+ supports a readOnlyCondition property that can be set to "!model.status.mustCreate" to allow an id property to be entered but not modified.
 
 ## Requirements
 

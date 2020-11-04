@@ -49,6 +49,7 @@ describe('FormStore with idProperty and id', function () {
     before(async function () {
       server.delete();
       await store.refresh();
+      store.dataServer.id = '1';
       store.data.id = '1'; // only mockServer.create validates email, .set does not.
       store.data.email = 'bad';
       await store.save();
@@ -77,12 +78,14 @@ describe('FormStore with idProperty', function () {
     before(async function () {
       server.delete();
       await store.refresh();
+      expect(store.status.mustCreate).to.be.true;
       store.data.email = 'test@domain.com';
       await store.save({ allowCreate: true });
     });
 
     it('should have an id', () => {
       expect(store.data.id).to.be.ok;
+      expect(store.status.mustCreate).to.be.false;
     });
   });
 
@@ -154,6 +157,7 @@ describe('AutoSaving FormStore', function () {
     before(async function () {
       server.delete();
       await store.refresh();
+      store.dataServer.id = '1';
       store.data.id = '1'; // only mockServer.create validates email, .set does not.
       store.data.email = 'bad';
       await delay(); // may not be necessary
