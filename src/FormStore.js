@@ -140,6 +140,7 @@ class FormStore {
     autoSaveOptions: { skipPropertyBeingEdited: true, keepServerError: true },
     autoSaveInterval: 0, // in ms
     minRefreshInterval: 0, // in ms
+    saveNotificationStatusOnError: null,
     log: function noop() {},
     logError: console.error.bind(console), // eslint-disable-line
     /** @type {Boolean|function(object): Boolean} passed status object */
@@ -586,6 +587,10 @@ class FormStore {
           store.options.log(`[${store.options.name}] Save finished.`);
         } catch (err) {
           handleError(store, err);
+          if (store.options.saveNotificationStatusOnError) {
+            store.saveNotification.status = store.options.saveNotificationStatusOnError;
+            store.saveNotification.active = true;
+          }
         }
 
         store.isSaving = false;
