@@ -1,6 +1,6 @@
 {
   "name": "mobx-form-store",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "MobX Backing Store for Forms with optional Auto/Incremental Save",
   "main": "lib/FormStore.js",
   "scripts": {
