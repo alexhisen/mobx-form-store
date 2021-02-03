@@ -419,12 +419,16 @@ class FormStore {
    * Loads data from server unless a refresh was performed within the last minRefreshInterval (i.e. 15 minutes).
    * If there are pending (and ready to save) changes, triggers save instead and 'resets the clock' on minRefreshInterval.
    * For a store with idProperty defined, if that data property is falsy in data received from server,
-   * loads from server only the very first time refresh() is called.
+   * loads from server only the very first time refresh() is called unless called with allowIfMustCreate=true option.
+   * @param {Object} [refreshOptions]
+   * @param {Boolean} [refreshOptions.allowIfMustCreate=false]
    * @returns {Promise|Boolean} resolves to true if refresh actually performed, false if skipped
    */
-  async refresh() {
+  async refresh(refreshOptions = {}) {
+    // for some reason this syntax is erroring in tests: const { allowIfMustCreate = false } = refreshOptions;
+    const allowIfMustCreate = refreshOptions.allowIfMustCreate || false;
     const store = this;
-    if (!store.options.server.get || (store.isReady && store.status.mustCreate)) {
+    if (!store.options.server.get || (store.isReady && store.status.mustCreate && !allowIfMustCreate)) {
       return false;
     }
     store.options.log(`[${store.options.name}] Starting data refresh...`);
