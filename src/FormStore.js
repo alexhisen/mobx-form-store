@@ -249,10 +249,7 @@ class FormStore {
     store.configAutoSave(store.options.autoSaveInterval, store.options.autoSaveOptions);
 
     if (data) {
-      store.dataServer = data;
-      store.reset();
-      observeComputedProperties(store);
-      store.isReady = true;
+      store.reset(data);
     }
   }
 
@@ -395,14 +392,17 @@ class FormStore {
 
   /**
    * Copies dataServer into data and resets the error observable and lastSync.
-   * Mostly for internal use by refresh().
-   * @param {Object} [data] Optionally set store.data to this object instead of copying dataServer
+   * Mostly for internal use by constructor and refresh().
+   * @param {Object} [data] If provided, dataServer will be set to it and store.isReady will be set to true
    */
   reset(data) {
     const store = this;
 
     action(() => {
-      store.data = data || Object.assign({}, store.dataServer);
+      if (data) {
+        store.dataServer = data;
+      }
+      store.data = Object.assign({}, store.dataServer);
 
       // setup error observable
       const temp = {};
@@ -412,6 +412,8 @@ class FormStore {
       store.dataErrors = temp;
 
       store.lastSync = null;
+      observeComputedProperties(store);
+      if (data && !store.isReady) store.isReady = true;
     })();
   }
 
@@ -482,9 +484,8 @@ class FormStore {
 
       if (typeof store.options.afterRefresh === 'function') {
         await store.options.afterRefresh(store);
+        observeComputedProperties(store); // again, in case afterRefresh added some
       }
-
-      observeComputedProperties(store);
 
       store.options.log(`[${store.options.name}] Refresh finished.`);
       if (!store.isReady) store.isReady = true;
