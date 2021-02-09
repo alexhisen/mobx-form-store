@@ -422,11 +422,14 @@ class FormStore {
    * loads from server only the very first time refresh() is called unless called with allowIfMustCreate=true option.
    * @param {Object} [refreshOptions]
    * @param {Boolean} [refreshOptions.allowIfMustCreate=false]
+   * @param {Boolean} [refreshOptions.ignoreMinRefreshInterval=false]
    * @returns {Promise|Boolean} resolves to true if refresh actually performed, false if skipped
    */
   async refresh(refreshOptions = {}) {
-    // for some reason this syntax is erroring in tests: const { allowIfMustCreate = false } = refreshOptions;
+    // for some reason this syntax is erroring in tests:
+    // const { allowIfMustCreate = false, ignoreMinRefreshInterval = false } = refreshOptions;
     const allowIfMustCreate = refreshOptions.allowIfMustCreate || false;
+    const ignoreMinRefreshInterval = refreshOptions.ignoreMinRefreshInterval || false;
     const store = this;
     if (!store.options.server.get || (store.isReady && store.status.mustCreate && !allowIfMustCreate)) {
       return false;
@@ -442,7 +445,7 @@ class FormStore {
     const past = new Date(Date.now() - store.options.minRefreshInterval);
 
     // check if lastSync is between now and 15 minutes ago
-    if (past < store.lastSync && store.lastSync <= now) {
+    if (!ignoreMinRefreshInterval && past < store.lastSync && store.lastSync <= now) {
       store.options.log(`[${store.options.name}] Data refreshed within last ${store.options.minRefreshInterval / 1000} seconds.`);
       return false;
     }
