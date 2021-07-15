@@ -6,9 +6,9 @@ let FormStore;
 const npmScript = process.env.npm_lifecycle_event;
 if (npmScript === 'test') {
   console.log('Testing compiled version');
-  FormStore = require('../lib/FormStore');
+  FormStore = require('../lib/FormStore').default;
 } else {
-  FormStore = require('../src/FormStore');
+  FormStore = require('../src/FormStore').default;
 }
 
 chai.expect();
@@ -229,10 +229,10 @@ describe('FormStore with minRefreshInterval', function () {
   });
 });
 
-describe('FormStore with a computed', function () {
+describe('FormStore with a computed and nested data', function () {
   beforeEach(function () {
     store = new FormStore({
-      name: 'FormStore with a computed',
+      name: 'FormStore with a computed and nested data',
       server,
       afterRefresh: async (store) => {
         delete store.data.name;
@@ -263,5 +263,46 @@ describe('FormStore with a computed', function () {
     store.data.lastName = 'lastname';
     await store.save({ saveAll: true });
     expect(store.dataServer.name).to.equal('first lastname');
+  });
+
+  it('should save arrays and objects in saveAll', async () => {
+    server.delete();
+    await store.refresh();
+    store.data.hobbies = ['chess'];
+    store.data.attributes = {
+      weight: 100,
+    };
+    await store.save({ saveAll: true });
+    expect(store.dataServer.hobbies[0]).to.equal('chess');
+    expect(store.dataServer.attributes.weight).to.equal(100);
+  });
+
+  it('should detect and save whole array changes', async () => {
+    server.delete();
+    await store.refresh();
+    store.data.hobbies = ['chess'];
+    expect(store.status.hasChanges).to.be.true;
+    await store.save();
+    expect(store.dataServer.hobbies[0]).to.equal('chess');
+  });
+
+  it('should detect and save whole object changes if contents differs', async () => {
+    server.delete();
+    await store.refresh();
+    store.data.attributes = {
+      weight: 100,
+      height: 150,
+    };
+    expect(store.status.hasChanges).to.be.true;
+    await store.save();
+    expect(store.dataServer.attributes.weight).to.equal(100);
+    expect(store.dataServer.attributes.height).to.equal(null); // server blocks this
+    expect(store.data.attributes.height).to.equal(150); // confirms that removal from updates does not affect data
+    expect(store.status.hasChanges).to.be.true;
+    store.data.attributes = {
+      height: null,
+      weight: 100,
+    };
+    expect(store.status.hasChanges).to.be.false;
   });
 });

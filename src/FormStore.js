@@ -1,6 +1,11 @@
 import { observable, observe, autorun, autorunAsync, action, computed, asMap, isComputedProp, isObservableArray } from 'mobx';
+import extend from 'just-extend';
 
 const DEFAULT_SERVER_ERROR_MESSAGE = 'Lost connection to server';
+
+function isObject(obj) {
+  return {}.toString.call(obj) === '[object Object]';
+}
 
 function isSame(val1, val2) {
   /* eslint-disable eqeqeq */
@@ -10,9 +15,28 @@ function isSame(val1, val2) {
     ((Array.isArray(val1) || isObservableArray(val1)) &&
      (Array.isArray(val2) || isObservableArray(val2)) &&
      val1.toString() === val2.toString()
-    )
+    ) ||
+    (isObject(val1) && isObject(val2) && compareObjects(val1, val2))
   );
   /* eslint-enable eqeqeq */
+}
+
+// Based on https://github.com/angus-c/just/blob/master/packages/collection-compare/index.js
+function compareObjects(val1, val2) {
+  const keys1 = Object.getOwnPropertyNames(val1).filter((key) => key[0] !== '$').sort();
+  const keys2 = Object.getOwnPropertyNames(val2).filter((key) => key[0] !== '$').sort();
+  const len = keys1.length;
+  if (len !== keys2.length) {
+    return false;
+  }
+  for (let i = 0; i < len; i++) {
+    const key1 = keys1[i];
+    const key2 = keys2[i];
+    if (!(key1 === key2 && isSame(val1[key1], val2[key2]))) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /**
@@ -96,12 +120,13 @@ async function processSaveResponse(store, updates, response) {
     store.serverError = null;
   }
 
-  Object.assign(store.dataServer, updates);
+  const deep = true;
+  extend(deep, store.dataServer, updates);
 
   action(() => {
     if (response.data) {
-      Object.assign(store.dataServer, response.data);
-      Object.assign(store.data, response.data);
+      extend(deep, store.dataServer, response.data);
+      extend(deep, store.data, response.data);
     }
 
     for (const [key, value] of Array.from(store.dataChanges)) {
@@ -402,7 +427,8 @@ class FormStore {
       if (data) {
         store.dataServer = data;
       }
-      store.data = Object.assign({}, store.dataServer);
+      const deep = true;
+      store.data = extend(deep, {}, store.dataServer);
 
       // setup error observable
       const temp = {};
@@ -522,10 +548,21 @@ class FormStore {
         }
         store.options.log(`[${store.options.name}] Starting data save...`);
 
+        const deep = true;
         let updates;
         if (saveAll) {
           updates = {};
-          Object.getOwnPropertyNames(store.data).forEach((key) => { if (key[0] !== '$') updates[key] = store.data[key]; });
+          Object.getOwnPropertyNames(store.data).forEach((property) => {
+            if (property[0] === '$') {
+              return;
+            }
+            if (isObservableArray(store.data[property])) {
+              updates[property] = store.data[property].slice();
+              return;
+            }
+            updates[property] = store.data[property];
+          });
+          updates = extend(deep, {}, updates);
         } else {
           // Mobx 4+ toJS() exports a Map, not an Object and toJSON is the 'legacy' method to export an Object
           updates = store.dataChanges.toJSON ? store.dataChanges.toJSON() : store.dataChanges.toJS();
@@ -536,7 +573,8 @@ class FormStore {
           }
 
           // check if we have property currently being edited in changes
-          // or if a property has an error and convert observable Arrays to plain ones
+          // or if a property has an error and clone (observable or regular)
+          // Arrays and Objects to plain ones
           Object.keys(updates).forEach((property) => {
             if (skipPropertyBeingEdited && property === store.propertyBeingEdited) {
               store.options.log(`[${store.options.name}] Property "${property}" is being edited.`);
@@ -550,14 +588,17 @@ class FormStore {
               return;
             }
 
-            if (isObservableArray(updates[property])) {
-              updates[property] = updates[property].slice();
-            }
-
             if (store.isSame(updates[property], store.dataServer[property])) {
               store.options.log(`[${store.options.name}] Property "${property}" is same as on the server.`);
               delete updates[property];
               store.dataChanges.delete(property);
+              return;
+            }
+
+            if (Array.isArray(updates[property]) || isObservableArray(updates[property])) {
+              updates[property] = updates[property].slice();
+            } else if (isObject(updates[property])) {
+              updates[property] = extend(deep, {}, updates[property]);
             }
           });
 

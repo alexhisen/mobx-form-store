@@ -14,7 +14,7 @@ Instances of FormStore \(models\) store the data entered by the user into form f
 ## Features
 
 * Tracks changes in each data property and by default saves only the changes.
-* Will not deem a property as changed for string/number, etc datatype changes or different Date objects with the same date or \(in v1.4+\) different Arrays with the same content.
+* Will not deem a property as changed for string/number, etc datatype changes or different Date objects with the same date or different Arrays \(in v1.4+\) or Objects \(in v3.0+\) with the same content.
 * Optionally auto-saves incremental changes \(if there are any\) every X milliseconds \(see [autoSaveInterval](https://alexhisen.gitbooks.io/mobx-forms/formstore-constructor.html)\).
 * By default, will not \(auto-\)save data properties that failed validation or that are still being edited by the user \(note that FormStore only provides the facilities to track this - validation, etc is done in different components\).
 * In a long-running app, can prevent unnecessary server requests to refresh data in the model by limiting them to not occur more often than Y milliseconds \(see [minRefreshInterval](https://alexhisen.gitbooks.io/mobx-forms/formstore-constructor.html)\).
@@ -31,9 +31,13 @@ This worked well if the idProperty was only returned by the server and was not u
 Now whether server.create() is called is driven by a new store.status.mustCreate property which is true only when the idProperty has not yet been returned by the server / saved even if it already has a value in store.data.
 Note that MobxSchemaForm v.1.14+ supports a readOnlyCondition property that can be set to "!model.status.mustCreate" to allow an id property to be entered but not modified.
 
+## Breaking changes in Version 3.0
+* FormStore now deep-clones \(and merges\) objects and arrays \(plain or observable\) when storing data coming from server and in the updates object sent to server.
+* It's no longer published as a webpack-compiled and minified module.
+
 ## Requirements
 
-FormStore only requires [MobX](https://mobx.js.org/) 2.2+, 3.x, 4.x or 5.x. _MobX strict mode is currently not supported._ It is published in NPM as an ES5 universal module, including a minified version. **FormStore does not implement the actual server requests, it only calls methods that you provide with the data to be sent to the server.**
+FormStore only requires [MobX](https://mobx.js.org/) 2.2+, 3.x, 4.x or 5.x. _MobX strict mode is currently not supported._ **FormStore does not implement the actual server requests, it only calls methods that you provide with the data to be sent to the server.**
 
 ## Installation
 

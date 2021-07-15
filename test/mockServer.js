@@ -1,3 +1,5 @@
+import extend from "just-extend";
+
 /* eslint-disable import/no-mutable-exports */
 let server;
 /* eslint-enable */
@@ -10,10 +12,16 @@ const record = {
   email: null,
   phone: null,
   birthdate: null,
+  hobbies: [],
+  attributes: {
+    weight: null,
+    height: null, // we prevent changes to this one
+  },
 };
 
 function getRecord() {
-  return JSON.parse(localStorage.getItem('mockServerUser')) || Object.assign({}, record);
+  const deep = true;
+  return JSON.parse(localStorage.getItem('mockServerUser')) || extend(deep, {}, record);
 }
 
 function setRecord(data) {
@@ -44,6 +52,9 @@ class MockServer {
       response.error = {
         email: 'Invalid email address',
       };
+    }
+    if (info.attributes) {
+      delete info.attributes.height;
     }
     setRecord(Object.assign(getRecord(), info));
     return response;
